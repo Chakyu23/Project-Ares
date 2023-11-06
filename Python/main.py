@@ -2,6 +2,7 @@
 
 import discord
 from Config import Config, connection_params
+from Token import Token
 import mysql.connector
 
 bdd = mysql.connector.connect(
@@ -45,4 +46,4 @@ async def on_message(message):
 
 
 
-client.run('MTE2NzQ1MzI4MTE5MTIxMTAwOQ.GkWYhc.KPRCi8MAKXc3GvXAeQZSpfmdCp3sPinzBZyqwI')
+client.run(Token)
