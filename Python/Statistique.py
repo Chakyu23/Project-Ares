@@ -21,9 +21,6 @@ CibleList = [
     "ALB", #Player + Hostile + Objet
 ]
 
-def New Statistique:
-
-
 class Statistique:
 
     def __init__(self, name, displayType, cible):
