@@ -35,8 +35,8 @@ class CogStat(commands.Cog):
     async def StatReady(self) -> None:
         print("Commande statistique : OK")
 
-    @commands.command(name="NewStat")
-    async def New(self, ctx : commands.Context, name : str, Type : str, Disp : str, Target : str):
+    @commands.hybrid_command(name="newstat")
+    async def New(self, ctx : commands.Context, name : str, type : str, disp : str, target : str):
         is_in_private_message = ctx.guild is None and isinstance(ctx.author, discord.User)
         if is_in_private_message:
             return await ctx.send("Impossible d'utiliser cette commande en message privé")
@@ -46,7 +46,7 @@ class CogStat(commands.Cog):
             return await ctx.send("Vous n'avez pas les permission pour cette commande")
         return
 
-    @commands.command(name="ResumeStat")
+    @commands.hybrid_command(name="resumestat")
     async def Resume(self, ctx : commands.Context, stat : str, *, resume : str):
         is_in_private_message = ctx.guild is None and isinstance(ctx.author, discord.User)
         if is_in_private_message:
@@ -57,8 +57,8 @@ class CogStat(commands.Cog):
             return await ctx.send("Vous n'avez pas les permission pour cette commande")
         return
 
-    @commands.command(name="Stat")
-    async def Show(self, ctx : commands.context):
+    @commands.hybrid_command(name="stat")
+    async def Show(self, ctx : commands.context, stat : str):
         embed_stat = discord.Embed(
             title="statName",
             description="Je suis une description de stat",
@@ -74,7 +74,7 @@ class CogCommon(commands.Cog):
     async def StatReady(self) -> None:
         print("Commande commune: OK")
 
-    @commands.command(name="clear")
+    @commands.hybrid_command(name="clear")
     async def Clear(self, ctx : commands.Context, amount : int = 5) -> discord.Message:
         is_in_private_message = ctx.guild is None and isinstance(ctx.author, discord.User)
         if is_in_private_message:
@@ -96,7 +96,7 @@ class CogCommon(commands.Cog):
 
         return await ctx.send(f"{amount} messages supprimés.")
     
-    @commands.command(name="example")
+    @commands.hybrid_command(name="example")
     async def Exemple(self, ctx : commands.context):
         embed_exmpl = discord.Embed(
             title="exemple",
@@ -114,7 +114,7 @@ class CogCommon(commands.Cog):
         embed_exmpl.set_image(url=ctx.guild.icon.url)
         embed_exmpl.set_footer(icon_url=ctx.author.display_avatar.url, text=ctx.author.display_name)
 
-
+        await ctx.defer()
         await ctx.send(embed=embed_exmpl)
            
 if __name__ == "__main__":
