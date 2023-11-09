@@ -1,0 +1,1 @@
+Mode libre : Joueur On acces a toutes les stat dispo pour eux, et peuvent les attribuer comme ils veulent hors stat possedant un emplacement principal
