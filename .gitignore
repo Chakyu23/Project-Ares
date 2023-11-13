@@ -1,2 +1,5 @@
 /Python/Token.py
-/Python/Config.py
+
+/__pycache__
+
+/Python/Bdd.py
