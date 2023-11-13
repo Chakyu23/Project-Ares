@@ -8,3 +8,4 @@ connection_params = {
     'password': "ARES1",
     'database': "project_ares",
 }
+
