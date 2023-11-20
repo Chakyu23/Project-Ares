@@ -43,7 +43,7 @@ CibleList = [
     "Djn", #Donjon
     "ALA", #Player + Hostile
     "ALB", #Player + Hostile + Objet
-    "ALC", #Player + Objet
+    "ALC" #Player + Objet
 ]
 
 CibleList_Desig = [
@@ -51,7 +51,7 @@ CibleList_Desig = [
     "Objet",
     "Hostile",
     "Donjon",
-    "Player/Hostile"
+    "Player/Hostile",
     "Player/Hostile/Objet",
     "Player/Objet"
 ]

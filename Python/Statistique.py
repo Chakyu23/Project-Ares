@@ -19,35 +19,35 @@ def AlphaPerm(ctx : commands.Context) -> str:
         return "ERROR;Impossible d'utiliser cette commande en message privé"
     
     has_permission = ctx.author.guild_permissions.administrator
-    print(has_permission)
     if has_permission == False:
         return "ERROR;Vous n'avez pas les permission pour cette commande"
     
     return "OK"
 
-def ST(Stype):
+def SType(Stype : str):
     vT = False
-    for i in len(variable.StatType):
+    for i in range(len(variable.StatType)):
         if variable.StatType[i] == Stype:
             vT = True
+
     if vT != True:
         embed_Error = discord.Embed(
             title="Type de Statistique",
             description="Liste de tous les type de Statistique disponible.",
             color= discord.Color.red()
         )
-        for i in len(variable.StatType):
+        for i in range(len(variable.StatType)):
             embed_Error.add_field(
-            name="Type : " + variable.StatType + " . " + variable.StatType_Desig,
-            value=variable.StatType_descript
+            name="Type : " + variable.StatType[i] + " . " + variable.StatType_Desig[i],
+            value=variable.StatType_descript[i]
             )
-        return embed_Error
+        return ["ERROR", embed_Error]
 
-    return "OK"
+    return ["OK"]
 
-def DT(disp):
+def DType(disp : str):
     vDT = False
-    for i in len(variable.displayType):
+    for i in range(len(variable.displayType)):
         if variable.displayType[i] == disp:
             vDT = True
     if vDT != True:
@@ -56,17 +56,17 @@ def DT(disp):
             description="Liste de tous les type de Display disponible.",
             color= discord.Color.red()
         )
-        for i in len(variable.displayType):
+        for i in range(len(variable.displayType)):
             embed_Error.add_field(
-            name="Type : " + variable.displayType + " . " + variable.displayType_Desig,
-            value=variable.displayType_descript
+            name="Type : " + variable.displayType[i] + " . " + variable.displayType_Desig[i],
+            value=variable.displayType_descript[i]
             )
-        return embed_Error
-    return "OK"
+        return ["ERROR", embed_Error]
+    return ["OK"]
 
-def TT(target):
+def TType(target : str):
     vDT = False
-    for i in len(variable.displayType):
+    for i in range(len(variable.CibleList)):
         if variable.CibleList[i] == target:
             vDT = True
 
@@ -76,14 +76,14 @@ def TT(target):
             description="Liste de tous les types de Cibles disponible.",
             color= discord.Color.red()
         )
-        for i in len(variable.displayType):
+        for i in range(len(variable.CibleList)):
             embed_Error.add_field(
-            name="Type : " + variable.CibleList + " . " + variable.CibleList_Desig,
-            value=variable.CibleList_descript
+            name="Type : " + variable.CibleList[i] + " . " + variable.CibleList_Desig[i],
+            value=variable.CibleList_descript[i]
             )
-        return embed_Error
+        return ["ERROR", embed_Error]
     
-    return "OK"
+    return ["OK"]
 
 class CogStat(commands.Cog):
     def __init__(self, bot : commands.bot) -> None:
@@ -94,32 +94,35 @@ class CogStat(commands.Cog):
         print("Commande statistique : OK")
 
     @commands.hybrid_command(name="newstat")
-    async def New(self, ctx : commands.Context, name : str, Stype : str, disp : str, target : str):
+    async def New(self, ctx : commands.Context, name : str, stattype : str, disp : str, target : str):
         sRet = AlphaPerm(ctx)
         if sRet != "OK" :
             return await ctx.send(sRet.split(";")[1])
+        
         c = project_Ares_bdd.cursor()
         c.execute("SELECT COUNT(*) as exist FROM statistique \
                   WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Name = '" + name + "'")
-        exist = c.fetchall()
-        if exist[0][0] != 0:
+        exist = c.fetchone()
+        if exist[0]!= 0:
             return await ctx.send("La statistique existe déjà")
         
-        sRet = ST(Stype)
-        if sRet != "OK":
-            return await ctx.send(embed=sRet)
-        
-        sRet = DT(disp)
-        if sRet != "OK":
-            return await ctx.send(embed=sRet)
-        
-        sRet = TT(target)
-        if sRet != "OK":
-            return await ctx.send(embed=sRet)
-        
+        c.close()
+
+        sRet = SType(str(stattype))
+        if sRet[0] != "OK":
+            return await ctx.send(embed=sRet[1])
+    
+        sRet = DType(str(disp))
+        if sRet[0] != "OK":
+            return await ctx.send(embed=sRet[1])
+    
+        sRet = TType(str(target))
+        if sRet[0] != "OK":
+            return await ctx.send(embed=sRet[1])
         
 
-        return
+
+        return await ctx.send("mission Complete")
     
 
 
