@@ -4,7 +4,7 @@ import discord
 import Statistique, Common
 from discord.ext import commands
 import Config
-from Token import Token
+from Token import TOKEN
 from Bdd import project_Ares_bdd
 
 class MyBot(commands.Bot):
@@ -18,11 +18,11 @@ class MyBot(commands.Bot):
     
     async def on_ready(self) -> None:
         print(Project_Ares_Bot.user.name, " est en ligne avec l'id : ", Project_Ares_Bot.user.id )
-    
+
 Project_Ares_Bot = MyBot()
            
 if __name__ == "__main__":
-    Project_Ares_Bot.run(Token)
+    Project_Ares_Bot.run(TOKEN)
 
 
 # guild_id = ""
