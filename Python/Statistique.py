@@ -104,8 +104,8 @@ class CogStat(commands.Cog):
                   WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Name = '" + name + "'")
         exist = c.fetchone()
         if exist[0]!= 0:
+            c.close()
             return await ctx.send("La statistique existe déjà")
-        
         c.close()
 
         sRet = SType(str(stattype))
@@ -120,7 +120,10 @@ class CogStat(commands.Cog):
         if sRet[0] != "OK":
             return await ctx.send(embed=sRet[1])
         
-
+        c.execute("Insert INTO statistique (Stat_ServID, Stat_Name, Stat_Type, Stat_DisplayType, Stat_Cible)" \
+            "values ('"+str(ctx.guild.id)+"', '"+name+"', '"+stattype+"', '"+disp+"', '"+target+"')")
+        project_Ares_bdd.commit()
+        c.close()
 
         return await ctx.send("mission Complete")
     
@@ -131,9 +134,64 @@ class CogStat(commands.Cog):
         sRet = AlphaPerm(ctx)
         if sRet != "OK" :
             return await ctx.send(sRet.split(";")[1])
+    
+        c = project_Ares_bdd.cursor()
+        c.execute("SELECT COUNT(*) as exist FROM statistique \
+                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Name = '" + stat + "'")
+        exist = c.fetchone()
+        if exist[0]!= 1:
+            c.close()
+            return await ctx.send("La statistique n'existe pas")
+        c.close()
+
+        c.execute("UPDATE statistique SET Stat_Resume = '" + resume + "' WHERE Stat_Name = '" + stat + "'")
+        project_Ares_bdd.commit()
+        c.close()
+
+        return await ctx.send("mission Complete")
+
+    @commands.hybrid_command(name="CalcStat")
+    async def Resume(self, ctx : commands.Context, stat : str, *, resume : str):
+        sRet = AlphaPerm(ctx)
+        if sRet != "OK" :
+            return await ctx.send(sRet.split(";")[1])
+    
+        c = project_Ares_bdd.cursor()
+        c.execute("SELECT COUNT(*) as exist, Stat_Type FROM statistique \
+                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Name = '" + stat + "'")
+        STnow = c.fetchone()
+        if STnow[0] != 1:
+            c.close()
+            return await ctx.send("La statistique n'existe pas")
+        if STnow[1] != "Cal" and STnow[1] != "Vit": 
+            c.close()
+            return await ctx.send("La statistique n'est pas calculé")
+        c.close()
+
+        
+
+
+        c.execute("UPDATE statistique SET Stat_Resume = '" + resume + "' \
+                  WHERE Stat_Name = '" + stat + "AND Stat_ServID = '" + str(ctx.guild.id) + "'")
+        project_Ares_bdd.commit()
+        c.close()
+
+        return await ctx.send("mission Complete")
+
+
 
     @commands.hybrid_command(name="stat")
     async def Show(self, ctx : commands.context, stat : str):
+
+        c = project_Ares_bdd.cursor()
+        c.execute("SELECT COUNT(*) as exist FROM statistique \
+                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Name = '" + stat + "'")
+        exist = c.fetchone()
+        if exist[0]!= 1:
+            c.close()
+            return await ctx.send("La statistique n'existe pas")
+        c.close()
+
         embed_stat = discord.Embed(
             title="statName",
             description="Je suis une description de stat",

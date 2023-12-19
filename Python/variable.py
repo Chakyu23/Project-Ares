@@ -21,20 +21,26 @@ displayType_Desig = [
 
 StatType = [
     "Spl", #Simple
-    "Cal" #Calculé a partir d'autre statistique
+    "Cal", #Calculé a partir d'autre statistique
+    "Xpe", #de type expérience
+    "Vit" #barre vitale exemple : pv, mana, endurance, etc, Est calculé
+    
 ]
 
 StatType_descript = [
     "Statistique simple, définie qui peu être augmenter ou diminuer de manière simple",
-    "Statistique Caluler grace a d'autre statistique, permettant ainsi de réaliséer des systeme plus complexe"
+    "Statistique Caluler grace a d'autre statistique, permettant ainsi de réaliséer des systeme plus complexe",
+    "Statistique d'expérience, ne peu pas diminuer, peu avoir plusieurs utilisation",
+    "Statistique vitale, c'est une barre de vie, forcément calculé cette stat permet de gérer l'état d'un personage, au moins une stat vitale est requise."
     
 ]
 
 StatType_Desig = [
     "Simple",
-    "Calculer"
+    "Calculer",
+    "Expérience",
+    "Vitale"
 ]
-
 
 CibleList = [
     "Pyr", #Player
