@@ -1,7 +1,9 @@
 # This example requires the 'message_content' intent.
 import mysql.connector
 import discord
+
 import Statistique, Common, Serveur
+
 from discord.ext import commands
 import Config
 from Token import TOKEN

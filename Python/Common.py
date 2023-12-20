@@ -8,7 +8,7 @@ class CogCommon(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener(name="on_ready")
-    async def StatReady(self) -> None:
+    async def Commonready(self) -> None:
         print("Commande commune: OK")
 
     @commands.hybrid_command(name="clear")

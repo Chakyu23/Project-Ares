@@ -108,7 +108,7 @@ def TType(target : str):
 
 def getCalc(calc : str, guildId : str):
     valid = False
-    regV = r"[\d \^+\-*/()]+"
+    regV = r"[\d +\-*/()]+"
 
     c = project_Ares_bdd.cursor()
     c.execute("SELECT Stat_Tag, Stat_Type FROM statistique \
@@ -121,13 +121,14 @@ def getCalc(calc : str, guildId : str):
                 return ["ERROR", "Impossible d'Imbriqué deux statistique calculé ou Vitale"]
             else:
                 valid = True
-                calc.replace(TagList[i][0], 5)
+                calc = calc.replace(TagList[i][0], "5")
     
-    if re.match(regV, calc):
+    list = re.findall(regV, calc)
+
+    if len(list) == len(calc):
         valid = valid
     else:
         return ["ERROR", "Tag incorecte et/ou caractère invalide"]
-
 
     if valid == True:
         return ["OK", calc]
@@ -139,7 +140,7 @@ class CogStat(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener(name="on_ready")
-    async def StatReady(self) -> None:
+    async def Statready(self) -> None:
         print("Commande statistique : OK")
 
     @commands.hybrid_command(name="newstat")
@@ -192,59 +193,66 @@ class CogStat(commands.Cog):
     
         c = project_Ares_bdd.cursor()
         c.execute("SELECT COUNT(*) as exist FROM statistique \
-                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Name = '" + stat + "'")
+                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
         exist = c.fetchone()
         if exist[0]!= 1:
             c.close()
             return await ctx.send("La statistique n'existe pas")
         c.close()
 
-        c.execute("UPDATE statistique SET Stat_Resume = '" + resume + "' WHERE Stat_Name = '" + stat + "'")
+        c.execute("UPDATE statistique SET WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
         project_Ares_bdd.commit()
         c.close()
 
         return await ctx.send("mission Complete")
 
     @commands.hybrid_command(name="calcstat")
-    async def Resume(self, ctx : commands.Context, stat : str, *, calcul : str):
+    async def StatCalcul(self, ctx : commands.Context, stat : str, *, calcul : str):
         sRet = AlphaPerm(ctx)
         if sRet != "OK" :
             return await ctx.send(sRet.split(";")[1])
     
         c = project_Ares_bdd.cursor()
         c.execute("SELECT COUNT(*) as exist FROM statistique \
-                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Name = '" + stat + "'")
+                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
         STnow = c.fetchone()
         if STnow[0] != 1:
             c.close()
             return await ctx.send("La statistique n'existe pas")
         
         c.execute("SELECT Stat_Type FROM statistique \
-                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Name = '" + stat + "'")
+                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
         STnow = c.fetchone()
         if STnow[0] != "CAL" and STnow[0] != "VIT": 
             c.close()
             return await ctx.send("La statistique n'est pas calculé")
         
 
-        expVerif = getCalc(calcul)
+        expVerif = getCalc(calcul, str(ctx.guild.id))
 
         if expVerif[0] != "OK":
-            return await ctx.send("Erreur lors de la lecture des tag: \n\r" + expVerif[1])
+            return await ctx.send("Erreur lors de la lecture des tag : \n" + expVerif[1])
 
-        try:
-            print(expVerif[1])
-            ast.literal_eval(expVerif[1])   
-        except (SyntaxError, ValueError) as e:
-            return await ctx.send("Erreur lors de l'évaluation de l'expression : \n\r" + e)
+        try: 
+            result = eval(str(expVerif[1]))
+        except Exception as e:
+            return await ctx.send("Erreur lors de la lecture du calcul : \n" + str(e))
+    
+            
 
+        print(result)
 
         c.execute("UPDATE statistique SET Stat_Calcul = '" + calcul + "' \
-                  WHERE Stat_Name = '" + stat + "AND Stat_ServID = '" + str(ctx.guild.id) + "'")
+                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
         project_Ares_bdd.commit()
         c.close()
 
         return await ctx.send("Statistique Correctement Enregistré")
+
+    @StatCalcul.error
+    async def StatCalcul_Error(Cog, ctx : commands.Context, error : commands.CommandError):
+        raise error
+
 
 
     @commands.hybrid_command(name="stat")
@@ -252,11 +260,13 @@ class CogStat(commands.Cog):
 
         c = project_Ares_bdd.cursor()
         c.execute("SELECT COUNT(*) as exist,  FROM statistique \
-                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Name = '" + stat + "'")
+                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
         exist = c.fetchone()
         if exist[0]!= 1:
             c.close()
             return await ctx.send("La statistique n'existe pas")
+        
+
         c.close()
 
         embed_stat = discord.Embed(
