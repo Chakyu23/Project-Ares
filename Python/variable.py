@@ -1,8 +1,8 @@
 displayType = [
-    "Num", #En nombre
-    "Bar", #Sous forme de barre
-    "Inv", #Invisible
-    "pr%"  #En Pourcent
+    "NUM", #En nombre
+    "BAR", #Sous forme de barre
+    "INV", #Invisible
+    "PR%"  #En Pourcent
 ]
 
 displayType_descript = [
@@ -20,10 +20,10 @@ displayType_Desig = [
 ]
 
 StatType = [
-    "Spl", #Simple
-    "Cal", #Calculé a partir d'autre statistique
-    "Xpe", #de type expérience
-    "Vit" #barre vitale exemple : pv, mana, endurance, etc, Est calculé
+    "SPL", #Simple
+    "CAL", #Calculé a partir d'autre statistique
+    "XPE", #de type expérience
+    "VIT" #barre vitale exemple : pv, mana, endurance, etc, Est calculé
     
 ]
 
@@ -43,10 +43,10 @@ StatType_Desig = [
 ]
 
 CibleList = [
-    "Pyr", #Player
-    "Obj", #Objet
-    "Mon", #Hostile
-    "Djn", #Donjon
+    "PYR", #Player
+    "OBJ", #Objet
+    "MON", #Hostile
+    "DJN", #Donjon
     "ALA", #Player + Hostile
     "ALB", #Player + Hostile + Objet
     "ALC" #Player + Objet

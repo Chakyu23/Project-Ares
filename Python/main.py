@@ -1,7 +1,7 @@
 # This example requires the 'message_content' intent.
 import mysql.connector
 import discord
-import Statistique, Common
+import Statistique, Common, Serveur
 from discord.ext import commands
 import Config
 from Token import TOKEN
@@ -14,6 +14,7 @@ class MyBot(commands.Bot):
     async def setup_hook(self) -> None:
         await self.add_cog(Statistique.CogStat(self))
         await self.add_cog(Common.CogCommon(self))
+        await self.add_cog(Serveur.CogServ(self))
         await self.tree.sync()
     
     async def on_ready(self) -> None:
