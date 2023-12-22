@@ -12,6 +12,7 @@ import re
 class Statistique():
 
     def __init__(self, Stat_ID, Tag, Disp, Targ):
+        self.Stat_ID = Stat_ID
         self.Tag    = Tag
         self.disp   = Disp
         self.Targ   = Targ

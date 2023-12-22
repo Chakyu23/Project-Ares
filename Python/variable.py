@@ -107,5 +107,11 @@ Effect_BrnTimer = [
     "AFT"  #Apres
 ]
 
-
+# EFFECT CIBLE
+Effect_Cible = [
+    "HOS", # Tout Hostile
+    "MON", # Cible Actuelle
+    "SEL", # Sois Même
+    "ALY"  # Tout Allié
+]
 

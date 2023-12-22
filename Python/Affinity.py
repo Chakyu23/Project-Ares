@@ -1,7 +1,5 @@
-import discord
 from discord.ext import commands
 import Serveur
-import variable
 from Bdd import project_Ares_bdd
 
 ###################################################################################################################################################
