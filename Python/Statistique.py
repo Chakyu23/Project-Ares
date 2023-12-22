@@ -121,12 +121,12 @@ def Stat_exist(stat : str, guilId : str):
     c.execute("SELECT COUNT(*) as exist FROM statistique \
               WHERE Stat_ServID = '" + guilId + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
     STnow = c.fetchone()
-    if STnow[0] != 1:
-        c.close()
-        return ["ERROR","La statistique n'existe pas"]
-    
     c.close()
-    return ["OK"]
+
+    if STnow[0] == 1:
+        return [STnow[0], "La Statistique existe déjà, vérifier Nom/Tag"]
+    else:
+        return [STnow[0], "La Statistique n'existe pas"]    
     
 def getCalc(calc : str, guildId : str):
     valid = False
@@ -171,40 +171,37 @@ class CogStat(commands.Cog):
         if sRet[0] != "OK" :
             return await ctx.send(sRet[1])
         
-        c = project_Ares_bdd.cursor()
-        c.execute("SELECT COUNT(*) as exist FROM statistique \
-                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Name = '" + name + "'")
-        exist = c.fetchone()
-        if exist[0]!= 0:
-            c.close()
-            return await ctx.send("La statistique existe déjà")
-
-        sRet = Vtag(str(tag), str(ctx.guild.id))
+        sRet = Stat_exist(tag, str(ctx.guild.id))
+        if sRet[0] != 0:
+            return await ctx.send(sRet[1])
+        
+        sRet = Stat_exist(name, str(ctx.guild.id))
+        if sRet[0] != 0:
+            return await ctx.send(sRet[1])
+    
+        sRet = Vtag(tag, str(ctx.guild.id))
         if sRet[0] != "OK":
-            c.close()
             return await ctx.send(sRet[1])
 
-        sRet = SType(str(stattype))
+        sRet = SType(stattype)
         if sRet[0] != "OK":
-            c.close()
             return await ctx.send(embed=sRet[1])
     
-        sRet = DType(str(disp))
+        sRet = DType(disp)
         if sRet[0] != "OK":
-            c.close()
             return await ctx.send(embed=sRet[1])
     
-        sRet = TType(str(target))
+        sRet = TType(target)
         if sRet[0] != "OK":
-            c.close()
             return await ctx.send(embed=sRet[1])
         
+        c = project_Ares_bdd.cursor()
         c.execute("Insert INTO statistique (Stat_ServID, Stat_Name, Stat_Tag, Stat_Type, Stat_DisplayType, Stat_Cible)" \
             "values ('"+str(ctx.guild.id)+"', '"+name+"', '"+tag+"', '"+stattype+"', '"+disp+"', '"+target+"')")
         project_Ares_bdd.commit()
         c.close()
 
-        return await ctx.send(name + " a bien été enregistré.")
+        return await ctx.send("La statistique " + name + " a bien été enregistré.")
 
     @commands.hybrid_command(name="stat_resume")
     async def Stat_resume(self, ctx : commands.Context, stat : str, *, resume : str):
@@ -215,15 +212,11 @@ class CogStat(commands.Cog):
         if len(resume) > 500:
             return await ctx.send("Le résumé est trop long, Limite 500 caractère")
 
-        c = project_Ares_bdd.cursor()
-        c.execute("SELECT COUNT(*) as exist FROM statistique \
-                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
-        exist = c.fetchone()
-        if exist[0]!= 1:
-            c.close()
-            return await ctx.send("La statistique n'existe pas")
-        c.close()
+        sRet = Stat_exist(str(stat), str(ctx.guild.id))
+        if sRet[0] != 1:
+            return await ctx.send(sRet[1])
 
+        c = project_Ares_bdd.cursor()
         c.execute("UPDATE statistique SET Stat_Resume = '" + resume + "' WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
         project_Ares_bdd.commit()
         c.close()
@@ -236,8 +229,8 @@ class CogStat(commands.Cog):
         if sRet[0] != "OK" :
             return await ctx.send(sRet[1])
 
-        sRet = Stat_exist(stat, str(ctx.guild.id))
-        if sRet[0] != "OK" :
+        sRet = Stat_exist(str(stat), str(ctx.guild.id))
+        if sRet[0] != 1:
             return await ctx.send(sRet[1])
         
         c = project_Ares_bdd.cursor()
@@ -281,8 +274,8 @@ class CogStat(commands.Cog):
         if min < 0: 
             return await ctx.send("Impossible, valeur inférieure ou égale à 0")
 
-        sRet = Stat_exist(stat, str(ctx.guild.id))
-        if sRet[0] != "OK" :
+        sRet = Stat_exist(str(stat), str(ctx.guild.id))
+        if sRet[0] != 1:
             return await ctx.send(sRet[1])
         
         c = project_Ares_bdd.cursor()
@@ -311,8 +304,8 @@ class CogStat(commands.Cog):
         if sRet[0] != "OK" :
             return await ctx.send(sRet[1])
 
-        sRet = Stat_exist(stat, str(ctx.guild.id))
-        if sRet[0] != "OK" :
+        sRet = Stat_exist(str(stat), str(ctx.guild.id))
+        if sRet[0] != 1:
             return await ctx.send(sRet[1])
 
         c = project_Ares_bdd.cursor()
@@ -336,8 +329,8 @@ class CogStat(commands.Cog):
     @commands.hybrid_command(name="stat_show")
     async def Stat_show(self, ctx : commands.context, stat : str):
 
-        sRet = Stat_exist(stat, str(ctx.guild.id))
-        if sRet[0] != "OK" :
+        sRet = Stat_exist(str(stat), str(ctx.guild.id))
+        if sRet[0] != 1:
             return await ctx.send(sRet[1])
         
         c = project_Ares_bdd.cursor()
