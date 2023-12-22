@@ -4,6 +4,10 @@ import Serveur
 import variable
 from Bdd import project_Ares_bdd
 
+###################################################################################################################################################
+###### GESTION Fonction
+###################################################################################################################################################
+
 def Affinity_exist(Affinity : str, guilId : str):
     c = project_Ares_bdd.cursor()
     c.execute("SELECT COUNT(*) as exist FROM affinity \
@@ -27,6 +31,10 @@ def Affinity_check(strong : str, weak : str, guildId : str):
         return [STnow[0], "La relation d'affinité existe déjà"]
     else:
         return [STnow[0], "La relation d'affinité n'existe pas"]
+
+###################################################################################################################################################
+###### GESTION Commandes
+###################################################################################################################################################
 
 class CogAffinity(commands.Cog):
     def __init__(self, bot : commands.bot) -> None:
@@ -91,3 +99,15 @@ class CogAffinity(commands.Cog):
         c.close()
         
         return await ctx.send("La relation d'affinité " + strong + " > " + ratio + " > " + weak + " a bien été enregistré.")
+
+###################################################################################################################################################
+###### GESTION ERREUR
+###################################################################################################################################################
+
+    @Affinity_new.error
+    async def Affinity_new_error(Cog, ctx : commands.Context, error : commands.CommandError):
+        raise error
+
+    @affinity_StrongTo.error
+    async def affinity_StrongTo_error(Cog, ctx : commands.Context, error : commands.CommandError):
+        raise error

@@ -5,13 +5,16 @@ import variable
 from Bdd import project_Ares_bdd
 import re
 
+###################################################################################################################################################
+###### GESTION Class Statistique
+###################################################################################################################################################
+
 class Statistique():
 
     def __init__(self, Stat_ID, Tag, Disp, Targ):
         self.Tag    = Tag
         self.disp   = Disp
         self.Targ   = Targ
-
 
 class StatSimple(Statistique):
 
@@ -36,6 +39,9 @@ class StatExeperience(Statistique):
         super().__init__(Stat_ID, Tag, Disp, Targ, Max)
         self.Max = Max
 
+###################################################################################################################################################
+###### GESTION Fonction
+###################################################################################################################################################
 
 def Vtag(Tag : str, guildId : str):
     if len(Tag) != 3:
@@ -157,14 +163,20 @@ def getCalc(calc : str, guildId : str):
     else: 
         return ["ERROR", "Aucun Tag trouvé"]  
 
+###################################################################################################################################################
+###### GESTION Commandes
+###################################################################################################################################################
+
 class CogStat(commands.Cog):
     def __init__(self, bot : commands.bot) -> None:
         self.bot = bot
 
+    # Cog On
     @commands.Cog.listener(name="on_ready")
     async def Stat_ready(self) -> None:
-        print("Commande statistique : OK")
+        print("Commande Statistique : OK")
 
+    # Création nouvelle Stat
     @commands.hybrid_command(name="stat_new")
     async def Stat_new(self, ctx : commands.Context, name : str, tag : str, stattype : str, disp : str, target : str):
         sRet = Serveur.AlphaPerm(ctx)
@@ -203,6 +215,7 @@ class CogStat(commands.Cog):
 
         return await ctx.send("La statistique " + name + " a bien été enregistré.")
 
+    # Définition Résumé Stat
     @commands.hybrid_command(name="stat_resume")
     async def Stat_resume(self, ctx : commands.Context, stat : str, *, resume : str):
         sRet = Serveur.AlphaPerm(ctx)
@@ -223,6 +236,7 @@ class CogStat(commands.Cog):
 
         return await ctx.send("Résumé de " + stat + " correctement enregistré.")
 
+    # Définition Calcul Stat
     @commands.hybrid_command(name="stat_calcul")
     async def Stat_calcul(self, ctx : commands.Context, stat : str, *, calcul : str):
         sRet = Serveur.AlphaPerm(ctx)
@@ -261,10 +275,7 @@ class CogStat(commands.Cog):
 
         return await ctx.send("Calcul de " + stat + " correctement enregistré")
 
-    @Stat_calcul.error
-    async def StatCalcul_Error(Cog, ctx : commands.Context, error : commands.CommandError):
-        raise error
-
+    # Définition Minimum Stat
     @commands.hybrid_command(name="stat_min")
     async def Stat_min(self, ctx : commands.context, stat : str, min : int):
         sRet = Serveur.AlphaPerm(ctx)
@@ -298,6 +309,7 @@ class CogStat(commands.Cog):
 
         return await ctx.send("Minimum de " + stat + " correctement définie à : " + str(min))
 
+    # Définition Maximum
     @commands.hybrid_command(name="stat_max")
     async def Stat_max(self, ctx : commands.context, stat : str, max : int):
         sRet = Serveur.AlphaPerm(ctx)
@@ -326,6 +338,7 @@ class CogStat(commands.Cog):
 
         return await ctx.send("Minimum de " + stat + " correctement définie à : " + str(max))
 
+    # Visualisation Statistique
     @commands.hybrid_command(name="stat_show")
     async def Stat_show(self, ctx : commands.context, stat : str):
 
@@ -401,3 +414,30 @@ class CogStat(commands.Cog):
 
         await ctx.send(embed=embed_stat)
  
+###################################################################################################################################################
+###### GESTION ERREUR
+###################################################################################################################################################
+
+    @Stat_new.error
+    async def Stat_new_Error(Cog, ctx : commands.Context, error : commands.CommandError):
+        raise error
+
+    @Stat_resume.error
+    async def Stat_resume_Error(Cog, ctx : commands.Context, error : commands.CommandError):
+        raise error
+    
+    @Stat_calcul.error
+    async def Stat_calcul_Error(Cog, ctx : commands.Context, error : commands.CommandError):
+        raise error
+    
+    @Stat_min.error
+    async def Stat_min_Error(Cog, ctx : commands.Context, error : commands.CommandError):
+        raise error
+
+    @Stat_max.error
+    async def Stat_max_Error(Cog, ctx : commands.Context, error : commands.CommandError):
+        raise error
+    
+    @Stat_show.error
+    async def Stat_show_Error(Cog, ctx : commands.Context, error : commands.CommandError):
+        raise error
