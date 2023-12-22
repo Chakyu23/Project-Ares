@@ -1,9 +1,18 @@
-import mysql.connector
 import discord
 from discord.ext import commands
-import variable
 from Bdd import project_Ares_bdd
-import ast
+
+
+def AlphaPerm(ctx : commands.Context) -> str:
+    is_in_private_message = ctx.guild is None and isinstance(ctx.author, discord.User)
+    if is_in_private_message:
+        return ["ERROR", "Impossible d'utiliser cette commande en message privé"]
+    
+    has_permission = ctx.author.guild_permissions.administrator
+    if has_permission == False:
+        return ["ERROR", "Vous n'avez pas les permission pour cette commande"]
+    
+    return ["OK"]
 
 
 class CogServ(commands.Cog):
@@ -32,6 +41,10 @@ class CogServ(commands.Cog):
 
     @commands.hybrid_command(name="serv_register")
     async def ServerREGISTER(self,  ctx : commands.Context):
+        sRet = AlphaPerm(ctx)
+        if sRet[0] != "OK" :
+            return await ctx.send(sRet[1])
+        
         print("Ajout :",str(ctx.guild.id))
         c = project_Ares_bdd.cursor()
         c.execute("SELECT COUNT(*) as exist FROM serveur \
@@ -46,6 +59,7 @@ class CogServ(commands.Cog):
         project_Ares_bdd.commit()
         c.close()
 
+    @commands.hybrid_command(name="serv_delete")
     async def ServerDELETE(self,  ctx : commands.Context):
         print("Suprression :", str(ctx.guild.id))
         c = project_Ares_bdd.cursor()

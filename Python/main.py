@@ -2,7 +2,7 @@
 import mysql.connector
 import discord
 
-import Statistique, Common, Serveur
+import Statistique, Common, Serveur, Affinity
 
 from discord.ext import commands
 import Config
@@ -14,9 +14,10 @@ class MyBot(commands.Bot):
         super().__init__(command_prefix= Config.Config["Command_Prefix"], intents=discord.Intents.all())
 
     async def setup_hook(self) -> None:
-        await self.add_cog(Statistique.CogStat(self))
-        await self.add_cog(Common.CogCommon(self))
         await self.add_cog(Serveur.CogServ(self))
+        await self.add_cog(Statistique.CogStat(self))
+        await self.add_cog(Affinity.CogAffinity(self))
+        await self.add_cog(Common.CogCommon(self))
         await self.tree.sync()
     
     async def on_ready(self) -> None:
