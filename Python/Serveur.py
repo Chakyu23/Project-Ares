@@ -70,8 +70,8 @@ class CogServ(commands.Cog):
             c.close()
             return await ctx.send("Le serveur n'est pas enregistrer")
         
-        c.execute("DELETE FROM serveur (Serv_ID, Serv_Name)" \
-            "values ('"+str(ctx.guild.id)+"')")
+        c.execute("DELETE FROM serveur  \
+            WHERE Serv_ID ='"+str(ctx.guild.id)+"'")
         project_Ares_bdd.commit()
         c.close()
 

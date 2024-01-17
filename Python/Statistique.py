@@ -131,9 +131,9 @@ def Stat_exist(stat : str, guilId : str):
     c.close()
 
     if STnow[0] == 1:
-        return [STnow[0], "La Statistique existe déjà, vérifier Nom/Tag"]
+        return [STnow[0], stat + " existe déjà, vérifier Nom/Tag"]
     else:
-        return [STnow[0], "La Statistique n'existe pas"]    
+        return [STnow[0], stat + " n'existe pas"]    
     
 def getCalc(calc : str, guildId : str):
     valid = False
@@ -223,8 +223,8 @@ class CogStat(commands.Cog):
         if sRet[0] != "OK" :
             return await ctx.send(sRet[1])
 
-        if len(resume) > 500:
-            return await ctx.send("Le résumé est trop long, Limite 500 caractère")
+        if len(resume) > 1500:
+            return await ctx.send("Le résumé est trop long, Limite 1500 caractère")
 
         sRet = Stat_exist(str(stat), str(ctx.guild.id))
         if sRet[0] != 1:
@@ -415,6 +415,23 @@ class CogStat(commands.Cog):
 
         await ctx.send(embed=embed_stat)
  
+    @commands.hybrid_command(name="suppr_Stat")
+    async def stat_Suppr(self, ctx : commands.context, stat : str):
+        sRet = Serveur.AlphaPerm(ctx)
+        if sRet[0] != "OK" :
+            return await ctx.send(sRet[1])
+
+        sRet = Stat_exist(stat, str(ctx.guild.id))
+        if sRet[0] != 1:
+            return await ctx.send(sRet[1])
+
+        c = project_Ares_bdd.cursor()
+        c.execute("DELETE FROM stat WHERE Stat_ServID = '"+ ctx.guild.id +"' AND Stat_Tag = '"+ stat +"' OR Stat_Name = '"+ stat +"'")
+        project_Ares_bdd.commit()
+        c.close()
+
+        return await ctx.send("L'affinité " + stat + " a bien été Supprimé.")
+
 ###################################################################################################################################################
 ###### GESTION ERREUR
 ###################################################################################################################################################

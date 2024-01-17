@@ -29,7 +29,8 @@ StatType = [
     "SPL", #Simple
     "CAL", #Calculé a partir d'autre statistique
     "XPE", #de type expérience
-    "VIT" #barre vitale exemple : pv, mana, endurance, etc, Est calculé
+    "VIT", #barre vitale exemple : pv, mana, endurance, etc, Est calculé
+    "VIF"  #Barre vitale non calculé : energie 
     
 ]
 
@@ -37,15 +38,16 @@ StatType_descript = {
     "SPL" : "Statistique simple, définie qui peu être augmenter ou diminuer de manière simple",
     "CAL" : "Statistique Caluler grace a d'autre statistique, permettant ainsi de réaliséer des systeme plus complexe",
     "XPE" : "Statistique d'expérience, ne peu pas diminuer, peu avoir plusieurs utilisation",
-    "VIT" : "Statistique vitale, c'est une barre de vie, forcément calculé cette stat permet de gérer l'état d'un personage, au moins une stat vitale est requise."
-    
+    "VIT" : "Statistique vitale, c'est une barre de vie, forcément calculé cette stat permet de gérer l'état d'un personage, au moins une stat vitale est requise.",
+    "VIF" : "Statistique vitale est utile pour des statistique fixe ou qui n'augmente que d'un palier fixe par niveaux"
 }
 
 StatType_Desig = {
    "SPL" : "Simple",
    "CAL" : "Calculer",
    "XPE" : "Expérience",
-   "VIT" : "Vitale"
+   "VIT" : "Vitale",
+   "VIF" : "Vitale Fixe"
 }
 
 #TYPE AFFECTATION STATISTIQUE/EFFECT
@@ -82,7 +84,7 @@ CibleList_descript = {
 
 #EFFECT VARIABLE
 
-EffectType = [
+Effect_Type = [
     "BUF", #Buff
     "UNI", #Instant Effect
     "BRN"  #Multi Turn Effect
@@ -109,8 +111,8 @@ Effect_BrnTimer = [
 
 # EFFECT CIBLE
 Effect_Cible = [
-    "HOS", # Tout Hostile
-    "MON", # Cible Actuelle
+    "HOS", # Tout Hostile, Zone
+    "MON", # Cible Actuelle, Ciblé
     "SEL", # Sois Même
     "ALY"  # Tout Allié
 ]
