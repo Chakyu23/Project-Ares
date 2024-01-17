@@ -117,7 +117,7 @@ class CogAffinity(commands.Cog):
         return await ctx.send("La relation d'affinité " + strong + " : " + ratio + " contre " + weak + " a bien été enregistré.")
 
     @commands.hybrid_command(name="affinity_rel")
-    async def Affinity_StrongTo(self, ctx : commands.context, affinity : str):
+    async def Affinity_Rel(self, ctx : commands.context, affinity : str):
         sRet = Affinity_exist(affinity, str(ctx.guild.id))
         if sRet[0] != 1:
             return await ctx.send(sRet[2])
@@ -241,7 +241,7 @@ class CogAffinity(commands.Cog):
         return await ctx.send("relation Supprimée")
 
     @commands.hybrid_command(name="affinity_img")
-    async def Affinity_Resume(self, ctx : commands.context, affinity : str, link : str):
+    async def Affinity_Img(self, ctx : commands.context, affinity : str, link : str):
         sRet = Serveur.AlphaPerm(ctx)
         if sRet[0] != "OK" :
             return await ctx.send(sRet[1])
@@ -249,8 +249,6 @@ class CogAffinity(commands.Cog):
         sRet = Affinity_exist(affinity, str(ctx.guild.id))
         if sRet[0] != 1:
             return await ctx.send(sRet[1])
-        
-        
 
         c = project_Ares_bdd.cursor()
         c.execute("UPDATE affinity SET Affinity_Img = '" + link + "' \
@@ -323,7 +321,7 @@ class CogAffinity(commands.Cog):
         return await ctx.send(embed=embed_AffinityList)
     
     @commands.hybrid_command(name="affinity")
-    async def Affinity_All(self, ctx : commands.context, affinity : str):
+    async def Affinity_Show(self, ctx : commands.context, affinity : str):
 
         sRet = Affinity_exist(affinity, str(ctx.guild.id))
         if sRet[0] != 1:
