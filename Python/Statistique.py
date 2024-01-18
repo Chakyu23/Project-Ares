@@ -122,26 +122,14 @@ def TType(target : str):
         return ["ERROR", embed_Error]
     
     return ["OK"]
-
-def Stat_exist(stat : str, guilId : str):
-    c = project_Ares_bdd.cursor()
-    c.execute("SELECT COUNT(*) as exist FROM statistique \
-              WHERE Stat_ServID = '" + guilId + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
-    STnow = c.fetchone()
-    c.close()
-
-    if STnow[0] == 1:
-        return [STnow[0], stat + " existe déjà, vérifier Nom/Tag"]
-    else:
-        return [STnow[0], stat + " n'existe pas"]    
     
-def getCalc(calc : str, guildId : str):
+def getCalc(calc : str, TagID : str):
     valid = False
     regV = r"[\d +\-*/()]+"
 
     c = project_Ares_bdd.cursor()
-    c.execute("SELECT Stat_Tag, Stat_Type FROM statistique \
-              WHERE Stat_ServID = '" + guildId + "'")
+    c.execute("SELECT tags.Tag_Tag, statistique.Stat_Type FROM tags INNER JOIN statistique ON tags.tag_ID = statistique.Stat_TagID \
+              WHERE statistique.Stat_TagID = '" + TagID + "'")
     TagList = c.fetchall()
     c.close()
     for i in range(len(TagList)):
@@ -184,11 +172,11 @@ class CogStat(commands.Cog):
         if sRet[0] != "OK" :
             return await ctx.send(sRet[1])
         
-        sRet = Stat_exist(tag, str(ctx.guild.id))
+        sRet = Serveur.TagExist(str(ctx.guild.id), tag)
         if sRet[0] != 0:
             return await ctx.send(sRet[1])
         
-        sRet = Stat_exist(name, str(ctx.guild.id))
+        sRet = Serveur.NameExist(str(ctx.guild.id), name)
         if sRet[0] != 0:
             return await ctx.send(sRet[1])
     
@@ -207,10 +195,14 @@ class CogStat(commands.Cog):
         sRet = TType(target)
         if sRet[0] != "OK":
             return await ctx.send(embed=sRet[1])
-        
+
+        tagID = Serveur.NewTag(str(ctx.guild.id), name, tag)
+        if tagID[0] != "OK":
+            return await ctx.send(tagID[1])
+
         c = project_Ares_bdd.cursor()
-        c.execute("Insert INTO statistique (Stat_ServID, Stat_Name, Stat_Tag, Stat_Type, Stat_DisplayType, Stat_Cible)" \
-            "values ('"+str(ctx.guild.id)+"', '"+name+"', '"+tag+"', '"+stattype+"', '"+disp+"', '"+target+"')")
+        c.execute("Insert INTO statistique (Stat_TagID, Stat_Type, Stat_DisplayType, Stat_Cible)" \
+            "values ('"+tagID[1]+"', '"+stattype+"', '"+disp+"', '"+target+"')")
         project_Ares_bdd.commit()
         c.close()
 
@@ -226,12 +218,12 @@ class CogStat(commands.Cog):
         if len(resume) > 1500:
             return await ctx.send("Le résumé est trop long, Limite 1500 caractère")
 
-        sRet = Stat_exist(str(stat), str(ctx.guild.id))
-        if sRet[0] != 1:
-            return await ctx.send(sRet[1])
+        TagID = Serveur.GetID(str(ctx.guild.id), stat)
+        if TagID[0] != 1:
+            return await ctx.send(TagID[1])
 
         c = project_Ares_bdd.cursor()
-        c.execute("UPDATE statistique SET Stat_Resume = '" + resume + "' WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
+        c.execute("UPDATE statistique SET Stat_Resume = '" + resume + "' WHERE Stat_TagID = '" + TagID[1] + "'")
         project_Ares_bdd.commit()
         c.close()
 
@@ -244,13 +236,13 @@ class CogStat(commands.Cog):
         if sRet[0] != "OK" :
             return await ctx.send(sRet[1])
 
-        sRet = Stat_exist(str(stat), str(ctx.guild.id))
-        if sRet[0] != 1:
-            return await ctx.send(sRet[1])
+        TagID = Serveur.GetID(str(ctx.guild.id), stat)
+        if TagID[0] != 1:
+            return await ctx.send(TagID[1])
         
         c = project_Ares_bdd.cursor()
         c.execute("SELECT Stat_Type FROM statistique \
-                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
+                  WHERE Stat_TagID = '" + TagID[1] + "'")
         STnow = c.fetchone()
         if STnow[0] != "CAL" and STnow[0] != "VIT": 
             c.close()
@@ -270,7 +262,7 @@ class CogStat(commands.Cog):
         print(result)
 
         c.execute("UPDATE statistique SET Stat_Calcul = '" + calcul + "' \
-                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
+                  WHERE Stat_TagID = '" + TagID[1] + "'")
         project_Ares_bdd.commit()
         c.close()
 
@@ -286,13 +278,13 @@ class CogStat(commands.Cog):
         if min < 0: 
             return await ctx.send("Impossible, valeur inférieure ou égale à 0")
 
-        sRet = Stat_exist(str(stat), str(ctx.guild.id))
-        if sRet[0] != 1:
-            return await ctx.send(sRet[1])
+        TagID = Serveur.GetID(str(ctx.guild.id), stat)
+        if TagID[0] != 1:
+            return await ctx.send(TagID[1])
         
         c = project_Ares_bdd.cursor()
         c.execute("SELECT Stat_Type, Stat_Max FROM statistique \
-                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
+                  WHERE Stat_TagID = '" + TagID[1] +  "'")
         STnow = c.fetchone()
         if STnow[0] != "SPL": 
             c.close()
@@ -304,7 +296,7 @@ class CogStat(commands.Cog):
             return await ctx.send("Le minimum est supérieur a l'actuel maximum, impossible de poursuivre.")
         
         c.execute("UPDATE statistique SET Stat_Min ='" + min + "'\
-                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
+                  WHERE Stat_TagID = '" + TagID[1] + "'")
         project_Ares_bdd.commit()
         c.close()
 
@@ -317,13 +309,13 @@ class CogStat(commands.Cog):
         if sRet[0] != "OK" :
             return await ctx.send(sRet[1])
 
-        sRet = Stat_exist(str(stat), str(ctx.guild.id))
-        if sRet[0] != 1:
-            return await ctx.send(sRet[1])
+        TagID = Serveur.GetID(str(ctx.guild.id), stat)
+        if TagID[0] != 1:
+            return await ctx.send(TagID[1])
 
         c = project_Ares_bdd.cursor()
         c.execute("SELECT Stat_Type, Stat_Min FROM statistique \
-                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
+                  WHERE Stat_TagID = '" + TagID[1] + "'")
         STnow = c.fetchone()
         if STnow[0] != "SPL" and STnow[0] != "XPE": 
             c.close()
@@ -333,7 +325,7 @@ class CogStat(commands.Cog):
             return await ctx.send("Le maximum est inférieur a l'actuel minimum, impossible de poursuivre.")
         
         c.execute("UPDATE statistique SET Stat_Max ='" + max + "'\
-                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
+                  WHERE Stat_ServID = '" + TagID[1] + "'")
         project_Ares_bdd.commit()
         c.close()
 
@@ -343,13 +335,15 @@ class CogStat(commands.Cog):
     @commands.hybrid_command(name="stat_show")
     async def Stat_show(self, ctx : commands.context, stat : str):
 
-        sRet = Stat_exist(str(stat), str(ctx.guild.id))
-        if sRet[0] != 1:
-            return await ctx.send(sRet[1])
+        TagID = Serveur.GetID(str(ctx.guild.id), stat)
+        if TagID[0] != 1:
+            return await ctx.send(TagID[1])
         
         c = project_Ares_bdd.cursor()
-        c.execute("SELECT Stat_Name, Stat_Tag, Stat_Type, Stat_Calcul, Stat_Resume, Stat_DisplayType, Stat_Cible, Stat_Min, Stat_Max FROM statistique \
-                  WHERE Stat_ServID = '" + str(ctx.guild.id) + "' AND Stat_Tag = '" + stat + "' OR Stat_Name = '" + stat + "'")
+        c.execute("SELECT Tags.Tag_Name, Tags.Tag_Tag, statistique.Stat_Type, statistique.Stat_Calcul, \
+                  statistique.Stat_Resume, statistique.Stat_DisplayType, statistique.Stat_Cible, \
+                  statistique.Stat_Min, statistique.Stat_Max FROM tags INNER JOIN statistique ON tags.Tag_ID = statistique.Stat_TagID \
+                  WHERE statistique.Stat_ServID = '" + TagID[1] + "'")
         Showing = c.fetchone()
         c.close()
         Name = Showing[0]
@@ -421,12 +415,12 @@ class CogStat(commands.Cog):
         if sRet[0] != "OK" :
             return await ctx.send(sRet[1])
 
-        sRet = Stat_exist(stat, str(ctx.guild.id))
-        if sRet[0] != 1:
-            return await ctx.send(sRet[1])
+        TagID = Serveur.GetID(str(ctx.guild.id), stat)
+        if TagID[0] != 1:
+            return await ctx.send(TagID[1])
 
         c = project_Ares_bdd.cursor()
-        c.execute("DELETE FROM stat WHERE Stat_ServID = '"+ ctx.guild.id +"' AND Stat_Tag = '"+ stat +"' OR Stat_Name = '"+ stat +"'")
+        c.execute("DELETE FROM stat WHERE Stat_ServID = '"+ TagID[1] +"'")
         project_Ares_bdd.commit()
         c.close()
 

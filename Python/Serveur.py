@@ -14,6 +14,62 @@ def AlphaPerm(ctx : commands.Context) -> str:
     
     return ["OK"]
 
+def TagExist(guildID : str, tag : str):
+    c = project_Ares_bdd.cursor()
+    c.execute("SELECT COUNT(*) as exist FROM tags \
+               WHERE Tag_ServID = '" + guildID + "' AND Tag_Tag = '" + tag + "'")
+    STnow = c.fetchone()
+    c.close()
+
+    if STnow[0] == 1:
+         return [STnow[0], tag + " existe déjà, vérifier Nom/Tag"]
+    else:
+         return [STnow[0], tag + " n'existe pas"]
+    
+def NameExist(guildID : str, name : str):
+    c = project_Ares_bdd.cursor()
+    c.execute("SELECT COUNT(*) as exist FROM tags \
+               WHERE Tag_ServID = '" + guildID + "' AND Tag_Name = '" + name + "'")
+    STnow = c.fetchone()
+    c.close()
+
+    if STnow[0] == 1:
+         return [STnow[0], name + " existe déjà, vérifier Nom/Tag"]
+    else:
+         return [STnow[0], name + " n'existe pas"]
+
+def NewTag(guildID : str, name : str = "", tag : str = ""):
+
+    c = project_Ares_bdd.cursor()
+    if name != "" and tag != "":
+        c.execute("Insert INTO tags (Tag_ServID, Tag_Tag, Tag_Name)" \
+            "values ('"+guildID+"', '"+tag+"', '"+name+"')") 
+    elif name == "" and tag != "":
+        c.execute("Insert INTO tags (Tag_ServID, Tag_Tag)" \
+            "values ('"+guildID+"', '"+tag+"')") 
+    elif name != "" and tag == "":
+        c.execute("Insert INTO tags (Tag_ServID, Tag_Name)" \
+            "values ('"+guildID+"', '"+name+"')") 
+    else:
+        return ["ERROR", "Impossible de récupéré l'ID"]
+    
+    project_Ares_bdd.commit()
+    c.close()
+
+    newID = GetID(guildID, name, tag)
+
+    return newID
+
+def GetID(guildID : str, things):
+    
+    c = project_Ares_bdd.cursor()
+    c.execute("SELECT Tag_ServID FROM Tags WHERE Tag_ServID = '"+ guildID +"' AND Tag_Tag = '"+ things +"' OR Tag_Name = '"+ things +"'")
+    newID = c.fetchone()
+    c.close()
+    if newID[0] == "" or newID[0] == None:
+        return ["ERROR", "Impossible de récupéré l'ID"]
+
+    return ["OK", newID[0]]
 
 class CogServ(commands.Cog):
     def __init__(self, bot : commands.bot) -> None:

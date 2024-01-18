@@ -6,24 +6,11 @@ from Bdd import project_Ares_bdd
 ###################################################################################################################################################
 ###### GESTION Fonction
 ###################################################################################################################################################
-
-def Affinity_exist(Affinity : str, guilId : str):
-    c = project_Ares_bdd.cursor()
-    c.execute("SELECT COUNT(*) as exist FROM affinity \
-              WHERE Affinity_ServID = '" + guilId + "' AND Affinity_Tag = '" + Affinity + "' OR Affinity_Name = '" + Affinity + "'")
-    STnow = c.fetchone()
-    c.close()
-
-    if STnow[0] == 1:
-        return [STnow[0], Affinity + " existe déjà"]
-    else:
-        return [STnow[0], Affinity + " n'existe pas"]
     
-def Affinity_check(strong : str, weak : str, guildId : str):
+def Affinity_check(strong : str, weak : str):
     c = project_Ares_bdd.cursor()
     c.execute("SELECT COUNT(*) as exist FROM affinity_rel  \
-              WHERE AffinityRel_ServID = '" + guildId + "' AND (AffinityRel_Strong = '" + strong + "' AND AffinityRel_Weak = '" + weak + "') \
-              OR (AffinityRel_Strong = '" +  weak + "' AND AffinityRel_Weak = '" + strong + "')  ")
+              WHERE AffinityRel_StrongID = '" + strong + "' AND AffinityRel_WeakID = '" + weak + "'")
     STnow = c.fetchone()
     c.close()
 
@@ -32,17 +19,17 @@ def Affinity_check(strong : str, weak : str, guildId : str):
     else:
         return [STnow[0], "La relation d'affinité n'existe pas"]
 
-def Rel_Affinity_Exist(rel_id : str, guilId : str):
+def Rel_Affinity_Exist(strong : str, weak : str):
     c = project_Ares_bdd.cursor()
     c.execute("SELECT COUNT(*) as exist FROM affinity_rel \
-              WHERE Affinity_ServID = '" + guilId + "' AND AffinityRel_ID = '" + rel_id  + "'")
+               WHERE AffinityRel_StrongID = '" + strong + "' AND AffinityRel_WeakID = '" + weak + "'")
     STnow = c.fetchone()
     c.close()
 
     if STnow[0] == 1:
-        return [STnow[0], rel_id + " existe déjà"]
+        return [STnow[0], strong + " > " + weak + " existe déjà"]
     else:
-        return [STnow[0], rel_id + " n'existe pas"]
+        return [STnow[0], strong + " > " + weak +  " n'existe pas"]
 
 ###################################################################################################################################################
 ###### GESTION Commandes
@@ -65,17 +52,21 @@ class CogAffinity(commands.Cog):
         if len(tag) != 3:
             return await ctx.send("Longueur de Tag incorecte, il dois faire 3 caractère de longeur")
 
-        sRet = Affinity_exist(tag, str(ctx.guild.id))
+        sRet = Serveur.TagExist(str(ctx.guild.id), tag)
         if sRet[0] != 0:
             return await ctx.send(sRet[1])
         
-        sRet = Affinity_exist(name, str(ctx.guild.id))
+        sRet = Serveur.NameExist(str(ctx.guild.id), name)
         if sRet[0] != 0:
             return await ctx.send(sRet[1])
 
+        tagID = Serveur.NewTag(str(ctx.guild.id), name, tag)
+        if tagID[0] != "OK":
+            return await ctx.send(tagID[1])
+
         c = project_Ares_bdd.cursor()
-        c.execute("Insert INTO affinity (Affinity_ServID, Affinity_Name, Affinity_Tag)" \
-            "values ('"+str(ctx.guild.id)+"', '"+ name +"', '"+ tag +"')")
+        c.execute("Insert INTO affinity (Affinity_TagID)" \
+            "values ('"+tagID[1]+"')")
         project_Ares_bdd.commit()
         c.close()
 
@@ -88,15 +79,15 @@ class CogAffinity(commands.Cog):
             return await ctx.send("Uniquement des tag sont accepter lors de la création de relation d'affinité, \
                                    utilisé /affinity_all pour récupéré la liste de toutes les affinité")
 
-        sRet = Affinity_exist(strong, str(ctx.guild.id))
-        if sRet[0] != 1:
-            return await ctx.send(sRet[1])
+        strongTagID = Serveur.GetID(str(ctx.guild.id), strong)
+        if strongTagID[0] != 1:
+            return await ctx.send(strongTagID[1])
 
-        sRet = Affinity_exist(weak, str(ctx.guild.id))
-        if sRet[0] != 1:
-            return await ctx.send(sRet[1])
+        weakTagID = Serveur.GetID(str(ctx.guild.id), weak)
+        if weakTagID[0] != 1:
+            return await ctx.send(weakTagID[1])
         
-        sRet = Affinity_check(strong, weak, str(ctx.guild.id))
+        sRet = Affinity_check(strongTagID[1], weakTagID[1])
         if sRet[0] != 1:
             return await ctx.send(sRet[1])
 
@@ -109,8 +100,8 @@ class CogAffinity(commands.Cog):
             return await ctx.send("Facteur trop faible, veuillez entré un facteur entre 10 et 1")
         
         c = project_Ares_bdd.cursor()
-        c.execute("Insert INTO affinity_rel (AffinityRel_ServID, AffinityRel_Strong, AffinityRel_Weak, AffinityRel_Factor, AffinityRel_ID)" \
-            "values ('"+str(ctx.guild.id)+"', '"+ strong +"', '"+ weak +"', '"+ ratio +"', '"+ strong+weak +"')")
+        c.execute("Insert INTO affinity_rel (AffinityRel_StrongID, AffinityRel_WeakID, AffinityRel_Factor)" \
+            "values ('"+ strongTagID[1] +"', '"+ weakTagID[1] +"', '"+ ratio +"')")
         project_Ares_bdd.commit()
         c.close()
         
@@ -118,13 +109,13 @@ class CogAffinity(commands.Cog):
 
     @commands.hybrid_command(name="affinity_rel")
     async def Affinity_Rel(self, ctx : commands.context, affinity : str):
-        sRet = Affinity_exist(affinity, str(ctx.guild.id))
-        if sRet[0] != 1:
-            return await ctx.send(sRet[2])
+        TagID = Serveur.GetID(str(ctx.guild.id), affinity)
+        if TagID[0] != 1:
+            return await ctx.send(TagID[1])
         
         c = project_Ares_bdd.cursor()
-        c.execute("SELECT Affinity_Tag, Affinity_Name, Affinity_Resume FROM affinity \
-          WHERE Affinity_ServID = '" + ctx.guild.id + "' AND Affinity_Tag = '" + affinity + "' OR Affinity_Name = '" + affinity + "'")
+        c.execute("SELECT Tags.Tag_Tag, Tags.Tag_Name, affinity.Affinity_Resume FROM tags INNER JOIN affinity ON tags.tag_ID = affinity.Affinity_TagID \
+          WHERE affinity.Affinity_TagID = '" + TagID[1] + "'")
 
         aff = c.fetchone()
 
@@ -134,8 +125,9 @@ class CogAffinity(commands.Cog):
             color= discord.Color.green()
         )
 
-        c.execute("SELECT AffinityRel_ID, AffinityRel_weak, AffinityRel_Factor, AffinityRel_Imune FROM affinity_rel \
-                  WHERE AffinityRel_ServID = '"+ ctx.guild.id +"' AND AffinityRel_Strong = '"+ aff[0] +"'")
+        c.execute("SELECT tags.tag_tag, tags.tag_name, affinity_rel.AffinityRel_Factor, affinity_rel.AffinityRel_Imune FROM affinity_rel \
+                  INNER JOIN tags on tags.Tag_ID = affinity_rel.AffinityRel_weakID \
+                  WHERE affinity_rel.AffinityRel_StrongID = '"+ TagID[1] +"'")
         weaker = c.fetchall()
         for i in range(len(weaker)):
 
@@ -146,13 +138,14 @@ class CogAffinity(commands.Cog):
 
             embed_AffinityRelList.add_field(
             name="Fort contre : " +  + " - " + weaker[i][1],
-            value="ID : " + weaker[i][0] + " \n\r \
+            value="Tag : " + weaker[i][0] + " \n\r \
                 Ratio : " + weaker[i][2] + " \n\r \
                 Imune : " + imn
             )
         
-        c.execute("SELECT AffinityRel_ID, AffinityRel_Strong, AffinityRel_Factor, AffinityRel_Imune FROM affinity_rel \
-                  WHERE AffinityRel_ServID = '"+ ctx.guild.id +"' AND AffinityRel_Weak = '"+ aff[0] +"'")
+        c.execute("SELECT tags.tag_tag, tags.tag_name, affinity_rel.AffinityRel_Factor, affinity_rel.AffinityRel_Imune FROM affinity_rel \
+                  INNER JOIN tags on tags.Tag_ID = affinity_rel.AffinityRel_StrongID \
+                  WHERE affinity_rel.AffinityRel_WeakID = '"+ TagID[1] +"'")
         stronger = c.fetchall()
         for i in range(len(stronger)):
 
@@ -163,7 +156,7 @@ class CogAffinity(commands.Cog):
 
             embed_AffinityRelList.add_field(
             name="Faible contre : " +  + " - " + stronger[i][1],
-            value="ID : " + stronger[i][0] + " \n\r \
+            value="Tag : " + stronger[i][0] + " \n\r \
                 Ratio : " + stronger[i][2] + " \n\r \
                 Imune : " + imn
             )
@@ -173,14 +166,22 @@ class CogAffinity(commands.Cog):
         return ctx.send(embed=embed_AffinityRelList)
 
     @commands.hybrid_command(name="affinity_ratio")
-    async def Affinity_Ratio(self, ctx : commands.context, affinity_relation_id : str, ratio : str):
+    async def Affinity_Ratio(self, ctx : commands.context, strong : str, weak : str, ratio : str):
         sRet = Serveur.AlphaPerm(ctx)
         if sRet[0] != "OK" :
             return await ctx.send(sRet[1])
 
-        sRet = Affinity_exist(affinity_relation_id, str(ctx.guild.id))
-        if sRet[0] != 1:
-            return await ctx.send(sRet[2])
+        strongTagID = Serveur.GetID(str(ctx.guild.id), strong)
+        if strongTagID[0] != 1:
+            return await ctx.send(strongTagID[1])
+
+        weakTagID = Serveur.GetID(str(ctx.guild.id), weak)
+        if weakTagID[0] != 1:
+            return await ctx.send(weakTagID[1])
+
+        sRet = Rel_Affinity_Exist(strong, weak)
+        if sRet[0] != "OK" :
+            return await ctx.send(sRet[1])
 
         ratio = round(ratio, 2)
 
@@ -192,21 +193,29 @@ class CogAffinity(commands.Cog):
         
         c = project_Ares_bdd.cursor()
         c.execute("UPDATE affinity_rel SET AffinityRel_Factor = '" + ratio + "' \
-                  WHERE AffinityRel_ServID = '" + str(ctx.guild.id) + "' AND AffinityRel_ID = '" + affinity_relation_id +"'")
+                  WHERE AffinityRel_StrongID = '" + strongTagID[1] + "' AND AffinityRel_WeakID = '" + weakTagID[1] +"'")
         project_Ares_bdd.commit()
         c.close()
 
         return await ctx.send("Ratio mis à jour")
 
     @commands.hybrid_command(name="affinity_imune")
-    async def Affinity_Imune(self, ctx : commands.context, affinity_relation_id : str, imune : str):
+    async def Affinity_Imune(self, ctx : commands.context,  strong : str, weak : str, imune : str):
         sRet = Serveur.AlphaPerm(ctx)
         if sRet[0] != "OK" :
             return await ctx.send(sRet[1])
 
-        sRet = Affinity_exist(affinity_relation_id, str(ctx.guild.id))
-        if sRet[0] != 1:
-            return await ctx.send(sRet[2])
+        strongTagID = Serveur.GetID(str(ctx.guild.id), strong)
+        if strongTagID[0] != 1:
+            return await ctx.send(strongTagID[1])
+
+        weakTagID = Serveur.GetID(str(ctx.guild.id), weak)
+        if weakTagID[0] != 1:
+            return await ctx.send(weakTagID[1])
+
+        sRet = Rel_Affinity_Exist(strong, weak)
+        if sRet[0] != "OK" :
+            return await ctx.send(sRet[1])
 
         if imune == "oui":
             imn = 1
@@ -217,24 +226,32 @@ class CogAffinity(commands.Cog):
         
         c = project_Ares_bdd.cursor()
         c.execute("UPDATE affinity_rel SET AffinityRel_Imune = '" + imn + "' \
-                  WHERE AffinityRel_ServID = '" + str(ctx.guild.id) + "' AND AffinityRel_ID = '" + affinity_relation_id +"'")
+                  WHERE AffinityRel_StrongID = '" + strongTagID[1] + "' AND AffinityRel_WeakID = '" + weakTagID[1] +"'")
         project_Ares_bdd.commit()
         c.close()
 
         return await ctx.send("immunité mise à jour")
 
     @commands.hybrid_command(name="affinity_remove_rel")
-    async def Affinity_Rel_Suppr(self, ctx : commands.context, affinity_relation_id : str):
+    async def Affinity_Rel_Suppr(self, ctx : commands.context, strong : str, weak : str):
         sRet = Serveur.AlphaPerm(ctx)
         if sRet[0] != "OK" :
             return await ctx.send(sRet[1])
 
-        sRet = Affinity_exist(affinity_relation_id, str(ctx.guild.id))
-        if sRet[0] != 1:
-            return await ctx.send(sRet[2])
+        strongTagID = Serveur.GetID(str(ctx.guild.id), strong)
+        if strongTagID[0] != 1:
+            return await ctx.send(strongTagID[1])
+
+        weakTagID = Serveur.GetID(str(ctx.guild.id), weak)
+        if weakTagID[0] != 1:
+            return await ctx.send(weakTagID[1])
         
+        sRet = Rel_Affinity_Exist(strong, weak)
+        if sRet[0] != "OK" :
+            return await ctx.send(sRet[1])
+
         c = project_Ares_bdd.cursor()
-        c.execute("DELETE FROM affinity_rel WHERE AffinityRel_ServID = '" + str(ctx.guild.id) + "' AND AffinityRel_ID = '" + affinity_relation_id +"'")
+        c.execute("DELETE FROM affinity_rel WHERE AffinityRel_StrongID = '" + strongTagID[1] + "' AND AffinityRel_WeakID = '" + weakTagID[1] +"'")
         project_Ares_bdd.commit()
         c.close()
 
@@ -246,18 +263,17 @@ class CogAffinity(commands.Cog):
         if sRet[0] != "OK" :
             return await ctx.send(sRet[1])
 
-        sRet = Affinity_exist(affinity, str(ctx.guild.id))
-        if sRet[0] != 1:
-            return await ctx.send(sRet[1])
+        TagID = Serveur.GetID(str(ctx.guild.id), affinity)
+        if TagID[0] != 1:
+            return await ctx.send(TagID[1])
 
         c = project_Ares_bdd.cursor()
         c.execute("UPDATE affinity SET Affinity_Img = '" + link + "' \
-                  WHERE Affinity_ServID = '" + str(ctx.guild.id) + "' AND Affinity_Tag = '" + affinity + "' OR Affinity_Name = '" + affinity + "'")
+                  WHERE Affinity_TagID = '" + TagID[1] + "'")
         project_Ares_bdd.commit()
         c.close()
 
         return await ctx.send("Résumé de " + affinity + " correctement enregistré.")
-
 
     @commands.hybrid_command(name="affinity_resume")
     async def Affinity_Resume(self, ctx : commands.context, affinity : str, *, resume : str):
@@ -265,9 +281,9 @@ class CogAffinity(commands.Cog):
         if sRet[0] != "OK" :
             return await ctx.send(sRet[1])
 
-        sRet = Affinity_exist(affinity, str(ctx.guild.id))
-        if sRet[0] != 1:
-            return await ctx.send(sRet[1])
+        TagID = Serveur.GetID(str(ctx.guild.id), affinity)
+        if TagID[0] != 1:
+            return await ctx.send(TagID[1])
 
         if len(resume) > 1500:
             return await ctx.send("Le résumé est trop long, Limite 1500 caractère")
@@ -275,7 +291,7 @@ class CogAffinity(commands.Cog):
 
         c = project_Ares_bdd.cursor()
         c.execute("UPDATE affinity SET Affinity_Resume = '" + resume + "' \
-                  WHERE Affinity_ServID = '" + str(ctx.guild.id) + "' AND Affinity_Tag = '" + affinity + "' OR Affinity_Name = '" + affinity + "'")
+                  WHERE Affinity_TagID = '" + TagID + "'")
         project_Ares_bdd.commit()
         c.close()
 
@@ -287,12 +303,12 @@ class CogAffinity(commands.Cog):
         if sRet[0] != "OK" :
             return await ctx.send(sRet[1])
 
-        sRet = Affinity_exist(affinity, str(ctx.guild.id))
-        if sRet[0] != 1:
-            return await ctx.send(sRet[1])
+        TagID = Serveur.GetID(str(ctx.guild.id), affinity)
+        if TagID[0] != 1:
+            return await ctx.send(TagID[1])
 
         c = project_Ares_bdd.cursor()
-        c.execute("DELETE FROM affinity WHERE Affinity_ServID = '"+ ctx.guild.id +"' AND Affinity_Tag = '"+ affinity +"' OR Affinity_affinity = '"+ affinity +"'")
+        c.execute("DELETE FROM affinity WHERE Affinity_TagID = '"+ TagID[1] +"'")
         project_Ares_bdd.commit()
         c.close()
 
@@ -301,8 +317,9 @@ class CogAffinity(commands.Cog):
     @commands.hybrid_command(name="affinity_all")
     async def Affinity_All(self, ctx : commands.context):
         c = project_Ares_bdd.cursor()
-        c.execute("SELECT Affinity_Tag, Affinity_Name, FROM affinity \
-          WHERE Affinity_ServID = '" + ctx.guild.id +"'")
+        c.execute("SELECT tags.Tag_Tag, tags.tag_name FROM tags \
+                  INNER JOIN affinity ON tags.Tag_ID = affinity.Affinity_TagID\
+                 WHERE tags.Tag_ServID = '" + ctx.guild.id +"'")
 
         listAff = ""
 
@@ -323,13 +340,14 @@ class CogAffinity(commands.Cog):
     @commands.hybrid_command(name="affinity")
     async def Affinity_Show(self, ctx : commands.context, affinity : str):
 
-        sRet = Affinity_exist(affinity, str(ctx.guild.id))
-        if sRet[0] != 1:
-            return await ctx.send(sRet[1])
+        TagID = Serveur.GetID(str(ctx.guild.id), affinity)
+        if TagID[0] != 1:
+            return await ctx.send(TagID[1])
 
         c = project_Ares_bdd.cursor()
-        c.execute("SELECT Affinity_Tag, Affinity_Name, Afinity_Resume, Affinity_img FROM affinity \
-          WHERE Affinity_ServID = '" + ctx.guild.id +"'  AND Affinity_Tag ='"+ affinity +"' OR Affinity_Name='"+ affinity +"'" )
+        c.execute("SELECT tags.Tag_Tag, tags.Tag_Name, affinity.Afinity_Resume, affinity.Affinity_img FROM affinity \
+                INNER JOIN tags ON tags.Tag_ID = affinity.Affinity_TagID \
+                WHERE affinity.Affinity_TagID = '"+ TagID[1] +"'" )
 
         aff = c.fetchone()
 
@@ -347,7 +365,6 @@ class CogAffinity(commands.Cog):
 
         return await ctx.send(embed=embed_Affinity)
     
-
 
 ###################################################################################################################################################
 ###### GESTION ERREUR
